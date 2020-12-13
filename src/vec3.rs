@@ -11,6 +11,8 @@ use std::ops::{
     Sub,
 };
 
+use crate::util::{random_double, random_double_range};
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Vec3(f64, f64, f64);
 
@@ -50,6 +52,38 @@ impl Vec3 {
 
     pub fn unit_vector(self) -> Self {
         self / self.length()
+    }
+
+    pub fn random() -> Self {
+        Vec3(random_double(), random_double(), random_double())
+    }
+
+    pub fn random_range(min: f64, max: f64) -> Self {
+        Vec3(
+            random_double_range(min, max),
+            random_double_range(min, max),
+            random_double_range(min, max),
+        )
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        loop {
+            let p = Self::random_range(-1.0, 1.0);
+            if p.length_squared() < 1.0 { return p; }
+        }
+    }
+
+    pub fn random_unit_vector() -> Self {
+        Self::random_in_unit_sphere().unit_vector()
+    }
+
+    pub fn random_in_hemisphere(normal: Vec3) -> Self {
+        let in_unit_sphere = Self::random_in_unit_sphere();
+        if in_unit_sphere.dot(normal) > 0.0 { // In the same hemisphere as the normal
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
     }
 }
 

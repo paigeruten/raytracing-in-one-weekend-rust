@@ -4,12 +4,11 @@ use crate::util::clamp;
 use crate::vec3::Color;
 
 pub fn write_color<W: Write>(out: &mut W, pixel_color: Color, samples_per_pixel: i32) {
-    // Divide the color by the number of samples.
+    // Divide the color by the number of samples and gamma-correct for gamma=2.0.
     let scale = 1.0 / samples_per_pixel as f64;
-
-    let r = pixel_color.x() * scale;
-    let g = pixel_color.y() * scale;
-    let b = pixel_color.z() * scale;
+    let r = (pixel_color.x() * scale).sqrt();
+    let g = (pixel_color.y() * scale).sqrt();
+    let b = (pixel_color.z() * scale).sqrt();
 
     // Write the translated [0,255] value of each color component.
     writeln!(
