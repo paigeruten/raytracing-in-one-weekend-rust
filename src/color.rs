@@ -1,7 +1,7 @@
 use std::io::Write;
 
+use crate::Color;
 use crate::util::clamp;
-use crate::vec3::Color;
 
 pub fn write_color<W: Write>(out: &mut W, pixel_color: Color, samples_per_pixel: i32) {
     // Divide the color by the number of samples and gamma-correct for gamma=2.0.

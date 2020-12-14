@@ -2,29 +2,31 @@ use std::rc::Rc;
 
 mod camera;
 mod color;
-mod hittable;
-mod hittable_list;
+mod material;
+mod object;
 mod ray;
-mod sphere;
 mod util;
 mod vec3;
 
-use crate::camera::Camera;
+pub use crate::camera::Camera;
+pub use crate::material::Material;
+pub use crate::ray::Ray;
+pub use crate::vec3::{Color, Point3, Vec3};
+
 use crate::color::write_color;
-use crate::hittable::Hittable;
-use crate::hittable_list::HittableList;
-use crate::ray::Ray;
-use crate::sphere::Sphere;
+use crate::material::{Lambertian, Metal, ScatterResult};
+use crate::object::{Hittable, HittableList, Sphere};
 use crate::util::random_double;
-use crate::vec3::{Color, Point3, Vec3};
 
 fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
     // If we've exceeded the ray bounce limit, no more light is gathered.
     if depth == 0 { return Color::new(0.0, 0.0, 0.0) }
 
     if let Some(rec) = world.hit(r, 0.001, f64::INFINITY) {
-        let target = rec.p + Vec3::random_in_hemisphere(rec.normal);
-        return 0.5 * ray_color(&Ray::new(rec.p, target - rec.p), world, depth - 1);
+        if let Some(ScatterResult { scattered, attenuation }) = rec.mat.scatter(r, &rec) {
+            return attenuation * ray_color(&scattered, world, depth - 1);
+        }
+        return Color::new(0.0, 0.0, 0.0);
     }
 
     let unit_direction = r.direction().unit_vector();
@@ -44,8 +46,16 @@ fn main() {
     // World
 
     let mut world = HittableList::new();
-    world.add(Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+
+    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let material_center = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
+    let material_left = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.3));
+    let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
+
+    world.add(Rc::new(Sphere::new(Point3::new( 0.0, -100.5, -1.0), 100.0, material_ground)));
+    world.add(Rc::new(Sphere::new(Point3::new( 0.0,    0.0, -1.0),   0.5, material_center)));
+    world.add(Rc::new(Sphere::new(Point3::new(-1.0,    0.0, -1.0),   0.5, material_left)));
+    world.add(Rc::new(Sphere::new(Point3::new( 1.0,    0.0, -1.0),   0.5, material_right)));
 
     // Camera
 

@@ -54,6 +54,15 @@ impl Vec3 {
         self / self.length()
     }
 
+    pub fn near_zero(self) -> bool {
+        let s = 1e-8;
+        self.0.abs() < s && self.1.abs() < s && self.2.abs() < s
+    }
+
+    pub fn reflect(self, normal: Vec3) -> Self {
+        self - 2.0 * self.dot(normal) * normal
+    }
+
     pub fn random() -> Self {
         Vec3(random_double(), random_double(), random_double())
     }
